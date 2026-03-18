@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senegal Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@latest/index.js"></script>
+  <script src="{{url_for('static', filename='js/chat.js')}}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+  <link rel="stylesheet" href="{{url_for('static', filename='css/chat.css')}}">
+</head>
+
+<body class="min-h-screen mesh-bg text-slate-100 relative">
+
+  <!-- ─── Decorative background orbs ─── -->
+  <div class="fixed top-0 left-1/4 w-96 h-96 rounded-full opacity-5 blur-3xl pointer-events-none" style="background:radial-gradient(circle, #f59e0b, transparent)"></div>
+  <div class="fixed bottom-0 right-1/4 w-80 h-80 rounded-full opacity-5 blur-3xl pointer-events-none" style="background:radial-gradient(circle, #10b981, transparent)"></div>
+
+  <div class="relative z-10 min-h-screen flex flex-col">
+
+    <!-- ══════════ HEADER ══════════ -->
+    <header class="sticky top-0 z-50 glass border-b" style="border-color: rgba(255,255,255,0.06)">
+      <div class="max-w-7xl mx-auto px-5 py-3.5 flex items-center justify-between">
+
+        <!-- Logo + user -->
+        <div class="flex items-center gap-4">
+          <div class="logo-glow relative h-11 w-11 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden" style="background: linear-gradient(135deg, #d97706, #f59e0b)">
+            <span class="font-display font-bold text-white text-base tracking-tight drop-shadow">SC</span>
+            <!-- Star of Senegal -->
+            <span class="absolute top-0.5 right-1 text-[8px] sen-star">★</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-display text-lg font-bold" style="color:#f5f0e8">Senegal Chat</span>
+              <span class="sen-star text-xs">★</span>
+            </div>
+            <p class="text-xs text-slate-400 tracking-wide">Bonjour, <span class="text-amber-400 font-semibold">{{current_user.fullname}}</span> 👋</p>
+          </div>
+        </div>
+
+        <!-- Right actions -->
+        <div class="flex items-center gap-3">
+          <div class="status-badge">
+            <span class="w-1.5 h-1.5 rounded-full bg-senGreen-400 inline-block"></span>
+            En ligne
+          </div>
+          <button id="themeToggle" title="Changer de thème"
+            class="h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+            style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
+            <!-- Icône soleil (par défaut) -->
+            <svg id="iconSun" class="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <!-- Icône lune (cachée au départ) -->
+            <svg id="iconMoon" class="hidden h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 0010.79 9.79z"/>
+            </svg>
+          </button>
+
+          <button title="Paramètres"
+            class="h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+            style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
+            <svg class="h-4.5 w-4.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- Kente rainbow line -->
+      <div class="kente-border"></div>
+    </header>
+
+    <!-- ══════════ MAIN ══════════ -->
+    <main class="flex-1 overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 py-5 h-full grid grid-cols-1 md:grid-cols-12 gap-5"
+           style="height: calc(100vh - 72px)">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="hidden md:flex md:col-span-4 lg:col-span-3 flex-col gap-4" style="height: 600px;">
+
+          <!-- Community info card -->
+          <div class="glass rounded-2xl overflow-hidden" style="border:1px solid rgba(255,255,255,0.07)">
+            <div class="kente-border"></div>
+            <div class="p-5">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xl">🦁</span>
+                <h2 class="font-display font-bold text-lg" style="color:#f5f0e8">Teranga</h2>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">La communauté sénégalaise en temps réel. Chat libre, bienveillant et ouvert.</p>
+              <div class="mt-3 grid grid-cols-3 gap-2">
+                <div class="rounded-xl p-2 text-center" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15)">
+                  <p class="text-amber-400 font-bold text-sm" id="countOnline">0</p>
+                  <p class="text-slate-500 text-[10px]">En ligne</p>
+                </div>
+                <button id="btnaddgroup" onclick="openGroupModal()" class="transition hover:scale-105">
+                  <div class="rounded-xl p-2 text-center" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15)">
+                    <p class="text-emerald-400 font-bold text-sm" id="addgroup">+</p>
+                    <p class="text-slate-500 text-[10px]">groupe</p>
+                  </div>
+                </button>
+                <button id="btnrech1" class="h-14 w-16 rounded-xl flex items-center justify-center transition hover:scale-105" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07)">
+                  <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </button>
+                <!-- Modal création de groupe -->
+                
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Espace de contact privé et de groupe -->
+          <div class="glass rounded-2xl flex-1 overflow-hidden flex flex-col" style="border:1px solid rgba(255,255,255,0.07)">
+            <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:rgba(255,255,255,0.07)">
+              <div class="flex items-center gap-2">
+                <div class="online-dot"></div>
+                <span class="text-sm font-semibold text-slate-200">Membres en ligne</span>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold text-amber-400" style="background:rgba(245,158,11,0.1)">LIVE</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3" style="scroll-behavior: smooth;">
+              <ul class="space-y-1" id="userList">
+                <li class="text-slate-500 text-sm text-center py-6 opacity-60">
+                  <span class="text-2xl block mb-2">🌙</span>
+                  Aucun utilisateur listé
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Décorative de la carte de pied de page -->
+          <div class="rounded-2xl p-4 text-center" style="background:linear-gradient(135deg, rgba(245,158,11,0.06), rgba(16,185,129,0.06)); border:1px solid rgba(245,158,11,0.1)">
+            <p class="text-xs text-slate-400">🇸🇳 <span class="text-amber-400 font-semibold">Sénégal</span> — Teranga & connexion</p>
+          </div>
+        </aside>
+
+        <!-- ── SECTION DU CHAT ── -->
+        <section class="md:col-span-8 lg:col-span-9 flex flex-col" style="height: 600px;">
+          <div class="glass rounded-2xl overflow-hidden flex flex-col h-full" style="border:1px solid rgba(255,255,255,0.07)">
+
+            <!-- Chat entete -->
+            <div class="px-5 py-4 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+              <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl flex items-center justify-center text-base" style="background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(16,185,129,0.2)); border:1px solid rgba(245,158,11,0.2)">
+                  💬
+                </div>
+                <div>
+                  <h2 class="font-semibold text-slate-100 text-sm"># général</h2>
+                  <p class="text-[11px] text-slate-500">Chat en temps réel</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <!-- zone indicateur d'ecriture -->
+                <div id="indicateurEcriture" class="hidden items-center gap-1.5 text-xs text-slate-500 italic">
+                  <div class="flex gap-1">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                  </div>
+                  <span id="typingText">écrit...</span>
+                </div>
+                <div class="status-badge">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
+                  best of
+                </div>
+                <!-- icon de recherche-->
+                <button id="btnrech" class="h-8 w-8 rounded-lg flex items-center justify-center transition hover:scale-105" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07)">
+                  <svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Zone de messages -->
+            <div id="chat" class="flex-1 overflow-y-auto p-5 space-y-4" style="scroll-behavior:smooth">
+
+              <!-- Profil de l'utilisateur sélectionné -->
+              <div id="profil" class="mb-2 flex justify-center items-center"></div>
+
+              <!-- Message de bienvenue (visible par défaut) -->
+              <div id="welcomeMessage" class="flex justify-center">
+                <div class="bubble-system px-4 py-2.5 text-center max-w-sm">
+                  <p class="text-xs text-emerald-400 font-medium">🇸🇳 Bienvenue sur Senegal Chat</p>
+                  <p class="text-[11px] text-slate-500 mt-0.5">Respectez les règles de la communauté. Teranga!</p>
+                </div>
+              </div>
+
+              <!-- Zone des messages (historique ou discussion privée) -->
+              <div id="messagesArea" class="space-y-4"></div>
+
+            </div>
+
+            <!-- zone de Saisie pour envoyer des messages -->
+            <div class="px-4 pb-4 pt-3 flex-shrink-0" style="border-top:1px solid rgba(255,255,255,0.07)">
+              <div class="flex items-end gap-3">
+                <div id="emojiPicker" class="hidden absolute bottom-20 left-4 z-50"></div>
+                <!-- Emoji bouton -->
+                <button id="emojibtn" class="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 transition hover:scale-105 text-lg"
+                  style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)">
+                  😊
+                </button>
+
+                <!-- Input wrapper -->
+                <div class="relative flex-1">
+                  <input id="message" type="text"
+                    autocomplete="off"
+                    placeholder="Écris un message en Teranga..."
+                    class="w-full rounded-xl px-5 py-3.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all duration-200"
+                    style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); caret-color:#f59e0b"
+                    onkeydown="if(event.key==='Enter')sendMessage()"
+                  />
+                </div>
+
+                <!-- Attach btn -->
+                <button class="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 transition hover:scale-105"
+                  style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)">
+                  <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+
+                <!-- Send button -->
+                <button id="sendBtn" onclick="sendMessage()"
+                  class="h-12 px-5 rounded-xl flex items-center gap-2 flex-shrink-0 font-semibold text-sm text-ink-900 shadow-lg"
+                  style="color:#0d1424">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                  <span class="hidden sm:inline">Envoyer</span>
+                </button>
+              </div>
+
+              <!-- Bottom helper -->
+              <p class="text-[10px] text-slate-600 mt-2 text-center tracking-wide">
+                Appuie sur <kbd class="px-1.5 py-0.5 rounded text-[9px]" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#94a3b8">Entrée</kbd> pour envoyer · Sois bienveillant 🤝
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ══════════ FOOTER ══════════ -->
+    <footer class="py-3 px-5 text-center flex items-center justify-center gap-4 flex-wrap" style="border-top:1px solid rgba(255,255,255,0.05)">
+      <span class="text-xs text-slate-600">🇸🇳 Senegal Chat</span>
+      <span class="text-slate-700">·</span>
+      <span class="text-xs text-slate-600">Propulsé par <span class="text-amber-500">Tailwind</span> & <span class="text-emerald-500">Socket.IO</span></span>
+      <span class="text-slate-700">·</span>
+      <span class="text-xs text-slate-600">Teranga © 2025</span>
+    </footer>
+  </div>
+  <!-- Modal création de groupe -->
+<div id="groupModal" 
+    class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 
+            opacity-0 transition-opacity duration-300">
+  <div class="bg-slate-800 rounded-xl p-6 w-96 shadow-lg transform scale-95 transition-transform duration-300">
+    <h3 class="text-slate-200 font-bold mb-4 text-lg">Créer un groupe</h3>
+    
+    <!-- Champ nom du groupe -->
+    <input id="groupName" type="text" placeholder="Nom du groupe"
+          class="w-full mb-4 p-2 rounded bg-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+
+    <!-- Liste des utilisateurs -->
+    <div id="userSelect" class="max-h-40 overflow-y-auto mb-4 space-y-2">
+      <!-- Cases à cocher injectées par JS -->
+    </div>
+
+    <!-- Boutons -->
+    <div class="flex justify-end gap-2">
+      <button onclick="closeGroupModal()" 
+              class="px-3 py-1 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition">
+        Annuler
+      </button>
+      <button onclick="createGroup()" 
+              class="px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-500 transition">
+        Ajouter
+      </button>
+    </div>
+  </div>
+</div>
+  
+  <!-- ══════════ SCRIPTS ══════════ -->
+   <script>
+      var currentUser = { id: {{ current_user.id }} };
+   </script>
+   <script src="{{url_for('static', filename='js/chat1.js')}}"></script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+* { font-family: 'Sora', sans-serif; }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Animated mesh background ─── */
+    .mesh-bg {
+      background:
+        radial-gradient(ellipse 60% 50% at 10% 20%, rgba(245,158,11,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 90% 80%, rgba(16,185,129,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(239,68,68,0.06) 0%, transparent 70%),
+        #080d1a;
+    }
+
+    /* ─── Kente pattern sidebar decoration ─── */
+    .kente-border {
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(245,158,11,0.7) 0px, rgba(245,158,11,0.7) 3px,
+        rgba(16,185,129,0.7) 3px, rgba(16,185,129,0.7) 6px,
+        rgba(239,68,68,0.7) 6px, rgba(239,68,68,0.7) 9px,
+        transparent 9px, transparent 15px
+      );
+      height: 3px;
+    }
+
+    /* ─── Custom scrollbar ─── */
+    #chat::-webkit-scrollbar { width: 5px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+    #chat::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.25); border-radius: 99px; }
+    #chat::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.45); }
+
+    /* ─── Glassmorphism panels ─── */
+    .glass {
+      background: rgba(13, 20, 36, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* ─── Gold shimmer text ─── */
+    .shimmer-text {
+      background: linear-gradient(90deg, #f59e0b, #fde68a, #f59e0b, #d97706);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* ─── Message bubbles ─── */
+    .msg-in {
+      animation: fadeUp 0.35s ease forwards;
+    }
+    .bubble-in {
+      background: rgba(26, 37, 64, 0.9);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 2px 16px 16px 16px;
+    }
+    .bubble-out {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      border-radius: 16px 2px 16px 16px;
+      color: #0d1424;
+    }
+    .bubble-system {
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+    }
+
+    /* ─── Input focus glow ─── */
+    #message:focus {
+      box-shadow: 0 0 0 2px rgba(245,158,11,0.4), 0 0 20px rgba(245,158,11,0.1);
+    }
+
+    /* ─── Send button ─── */
+    #sendBtn {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      transition: all 0.25s ease;
+    }
+    #sendBtn:hover {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      box-shadow: 0 0 24px rgba(245,158,11,0.45);
+      transform: translateY(-1px);
+    }
+    #sendBtn:active { transform: scale(0.97); }
+
+    /* ─── Online dot ─── */
+    .online-dot {
+      width: 8px; height: 8px;
+      background: #34d399;
+      border-radius: 50%;
+      border: 2px solid #080d1a;
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+
+    /* ─── User avatar ─── */
+    .user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+      flex-shrink: 0;
+      border: 2px solid rgba(245,158,11,0.3);
+      box-shadow: 0 0 12px rgba(245,158,11,0.1);
+    }
+
+    /* ─── Sidebar user items ─── */
+    .user-item {
+      transition: all 0.2s ease;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .user-item:hover {
+      background: rgba(245,158,11,0.06);
+      border-color: rgba(245,158,11,0.2);
+    }
+
+    /* ─── Header logo glow ─── */
+    .logo-glow { animation: glow 3s ease-in-out infinite alternate; }
+
+    /* ─── Scrollbar for userList ─── */
+    #userList::-webkit-scrollbar { width: 3px; }
+    #userList::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.2); border-radius: 99px; }
+
+    /* ─── Typing indicator ─── */
+    .typing-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(245,158,11,0.7);
+      animation: pulseDot 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ─── Decorative star ─── */
+    .sen-star { color: #f59e0b; }
+
+    /* ─── Status badge ─── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px; border-radius: 99px;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #34d399;
+    }
+
+    /* ─── Header border animation ─── */
+    .header-border {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(245,158,11,0.3), rgba(16,185,129,0.3), rgba(239,68,68,0.3), transparent);
+    }
+
+    @keyframes slideIn { from { transform: translateX(-8px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .slide-in { animation: slideIn 0.4s ease forwards; }
+
+/* Style pour indicateur de saisie*/
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #64748b; /* gris slate */
+  border-radius: 50%;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.selected-user {
+  background-color: rgba(16,185,129,0.2); /* vert léger */
+  border: 1px solid rgba(16,185,129,0.4);
+}
+
+.emoji-text {
+  font-size: 1.5em;   /* 👉 augmente la taille des emoji */
+  line-height: 1.2;
+}
+
+/* Mode clair */
+.light-theme {
+  background-color: #f5f0e8;
+  color: #0d1424;
+}
+
+/* Mode sombre */
+.dark-theme {
+  background-color: #0d1424;
+  color: #f5f0e8;
+}
