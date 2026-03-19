@@ -203,3 +203,14 @@
   background-color: #0d1424;
   color: #f5f0e8;
 }
+
+/* image de font*/
+.bg-img{
+  background-image: url("../images/Img1.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-color: rgba(0, 0, 0, 0.5); /* couche noire à 50% */
+  background-blend-mode: darken;
+
+}

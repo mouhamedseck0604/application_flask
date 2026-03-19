@@ -1,7 +1,7 @@
 
 from flask_login import  UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db, login_manager
+from . import app, db, login_manager
 from datetime import datetime
 
 
@@ -73,3 +73,4 @@ class Message(UserMixin,db.Model):
     dest = db.relationship('Utilisateur', foreign_keys=[dest_id])
     group = db.relationship('Group')
 
+with app.app_context(): db.create_all()

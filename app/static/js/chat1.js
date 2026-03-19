@@ -166,6 +166,8 @@ socket.on('update_members', function(data) {
       document.querySelectorAll('#userList li').forEach(el => el.classList.remove('selected-user'));
       // Ajouter la classe à l’utilisateur cliqué
       li.classList.add('selected-user');
+      document.getElementById('zonetext').classList.remove('hidden');
+      document.getElementById('chat').classList.remove('bg-img');
       ouvrirchatpv(user.id, user.fullname);
     })
     userList.appendChild(li);
@@ -188,6 +190,8 @@ socket.on('update_members', function(data) {
     li.addEventListener('click',()=>{
       document.querySelectorAll('#userList li').forEach(el => el.classList.remove('selected-user') );
       li.classList.add('selected-user');
+      document.getElementById('zonetext').classList.remove('hidden');
+      document.getElementById('chat').classList.remove('bg-img');
       ouvrirchatgp(group.id, group.nomGroup);
     })
     userList.appendChild(li);

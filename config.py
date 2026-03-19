@@ -5,4 +5,7 @@ SECRET_KEY = '#d#JCATTW\nilK\\7m\x0bp#\tj~#S'
 #basedir = os.path.abspath(os.path.dirname(__file__))
 #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:@localhost/chat_db'
+#SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:@localhost/chat_db'
+
+
+SQLALCHEMY_DATABASE_URI = "mysql+pymysql://seck:seck123@db_service/chat_db"

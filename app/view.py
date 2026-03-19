@@ -7,7 +7,6 @@ from .model import  Utilisateur, Group, Message, GroupMembre
 from flask_login import login_user
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 
-
 #formulaire de connexion
 class formulaireLogin(FlaskForm):
     email = EmailField('Email')

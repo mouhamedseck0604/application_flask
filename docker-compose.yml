@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Service de l'application Flask
+  app:
+    build: .
+    container_name: flask_chat
+    ports:
+      - "5005:5005"
+    environment:
+      - DB_HOST=db_service  # IMPORTANT : correspond au nom du service ci-dessous
+      - DB_USER=seck
+      - DB_PASSWORD=seck123
+      - DB_NAME=chat_db
+    depends_on:
+      - db_service
+    networks:
+      - devnet_network
+
+  # Service de la base de données (MySQL)
+  db_service:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      - MYSQL_DATABASE=chat_db
+      - MYSQL_USER=seck
+      - MYSQL_PASSWORD=seck123
+      - MYSQL_ROOT_PASSWORD=passer
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - devnet_network
+
+# Définition du réseau et du volume
+networks:
+  devnet_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
