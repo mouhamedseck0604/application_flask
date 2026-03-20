@@ -13,7 +13,8 @@ services:
       - DB_PASSWORD=seck123
       - DB_NAME=chat_db
     depends_on:
-      - db_service
+      db_service:
+        condition: service_healthy
     networks:
       - devnet_network
 
@@ -31,6 +32,12 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - devnet_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppasser"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 # Définition du réseau et du volume
 networks:
