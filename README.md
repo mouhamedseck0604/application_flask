@@ -9,6 +9,7 @@ Application de messagerie instantanée développée avec Flask, Flask-SocketIO e
 - **Messages privés** : Conversation en tête-à-tête entre utilisateurs
 - **Groupes** : Création de groupes et discussions collectives
 - **Statut en ligne** : Affichage des utilisateurs connectés
+- **Recherche** : Recherche de message ou de contact
 
 ## Prérequis
 
@@ -105,4 +106,4 @@ application_flask/
 
 ## Licence
 
-Projet à usage personnel / éducatif.
+Projet pédagogique - Application de chat distribué
