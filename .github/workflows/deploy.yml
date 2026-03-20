@@ -1,0 +1,32 @@
+name: Simple CI/CD Docker Hub
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Récupération du code
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Connexion à Docker Hub
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 3️⃣ Build et Push de l'image
+      - name: Build et Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:${{github.sha}}
+            ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:${{github.run_number}}
