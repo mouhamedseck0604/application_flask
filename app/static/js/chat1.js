@@ -182,10 +182,14 @@ socket.on('update_members', function(data) {
   // Afficher les groupes
   data.groups.forEach(group => {
     const li = document.createElement('li');
-    li.className = "flex items-center gap-2 px-3 py-2 cursor-pointer rounded-lg hover:bg-slate-700/30 transition";
+    li.className = "flex items-center justify-between px-3 py-2 cursor-pointer rounded-lg hover:bg-slate-700/30 transition";
     li.innerHTML = `
-      <i class="fas fa-users w-5 h-5 text-slate-400"></i>
-      <span class="text-sm text-slate-200">${group.nomGroup}</span>
+      <div classe="gap-2">
+        <i class="fas fa-users w-5 h-5 text-slate-400"></i>
+        <span class="text-sm text-slate-200">${group.nomGroup}</span>
+      </div>
+      ${group.unread > 0 ? `<span class="ml-2 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${group.unread} <i class="fas fa-envelope"></i>
+      </span>` : ""}
     `;
     li.addEventListener('click',()=>{
       document.querySelectorAll('#userList li').forEach(el => el.classList.remove('selected-user') );
@@ -193,6 +197,8 @@ socket.on('update_members', function(data) {
       document.getElementById('zonetext').classList.remove('hidden');
       document.getElementById('chat').classList.remove('bg-img');
       ouvrirchatgp(group.id, group.nomGroup);
+      // 👉 remettre le compteur à zéro quand on ouvre le groupe
+      socket.emit("messages_lu", { group_id: group.id, user_id: currentUser.id });
     })
     userList.appendChild(li);
   });

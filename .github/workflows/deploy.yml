@@ -28,5 +28,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:${{github.sha}}
             ${{ secrets.DOCKERHUB_USERNAME }}/flask_chat:${{github.run_number}}

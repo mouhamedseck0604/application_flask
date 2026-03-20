@@ -6,6 +6,7 @@ from . import app,db
 from .model import  Utilisateur, Group, Message, GroupMembre
 from flask_login import login_user
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
+from datetime import datetime
 
 #formulaire de connexion
 class formulaireLogin(FlaskForm):
@@ -99,15 +100,41 @@ def broadcast_members():
         # Récupérer les groupes dont l’utilisateur est membre
         groupes_membre = GroupMembre.query.filter_by(user_id=u.id).all()
 
+        groups_payload = []
+        for gm in groupes_membre:
+            # Dernier message du groupe
+            last_msg = Message.query.filter_by(group_id=gm.group.id).order_by(Message.timestamp.desc()).first()
+
+            # Nombre de messages non lus
+            if gm.last_seen:
+                unread_count = Message.query.filter(
+                    Message.group_id == gm.group.id,
+                    Message.timestamp > gm.last_seen,
+                    Message.exp_id != gm.user_id
+                ).count()
+            else:
+                unread_count = Message.query.filter(
+                    Message.group_id == gm.group.id,
+                    Message.exp_id != gm.user_id
+                ).count()
+
+            groups_payload.append({
+                "id": gm.group.id,
+                "nomGroup": gm.group.nomGroup,
+                "last_message": last_msg.contenu if last_msg else "",
+                "last_time": last_msg.timestamp.isoformat() if last_msg else None,  # 👉 conversion en string
+                "unread": unread_count
+            })
+
+        # Tri par dernier message
+        groups_payload.sort(key=lambda g: g["last_time"] or "", reverse=True)
+
         payload = {
             "users": [
                 {"id": usr.id, "fullname": usr.fullname, "online": usr.id in online_users}
                 for usr in users
             ],
-            "groups": [
-                {"id": gm.group.id, "nomGroup": gm.group.nomGroup}
-                for gm in groupes_membre
-            ],
+            "groups": groups_payload,
             "countOnline": len(online_users)   # ajout du compteur
         }
 
@@ -216,3 +243,17 @@ def message_group(data):
         "time": msg.timestamp.strftime("%H:%M"),
         "group": group_id
     }, room=f"group_{group_id}")
+    # Mise à jour en temps réel des badges et derniers messages
+    broadcast_members()
+
+# messages lu
+@socketio.on("messages_lu")
+def mark_group_read(data):
+    group_id = data["group_id"]
+    user_id = data["user_id"]
+
+    gm = GroupMembre.query.filter_by(group_id=group_id, user_id=user_id).first()
+    if gm:
+        gm.last_seen = datetime.utcnow()
+        db.session.commit()
+    broadcast_members()

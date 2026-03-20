@@ -53,6 +53,7 @@ class GroupMembre(UserMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=False)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     #cette ligne permet depuis l'objet GroupeMembre de pouvoir accéder directement l'utilisateur associé via .user
     #<<backref='groups'>> l'objet Utilisateur aura automatiquement l'attribut .groups qui liste toutes ses appartenances
