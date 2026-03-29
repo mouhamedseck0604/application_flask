@@ -1,0 +1,40 @@
+/* Fond avec image + voile bleu */
+.bg-img {
+    background-image: url('../images/Img.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.5); /* couche noire à 50% */
+    background-blend-mode: darken;
+}
+
+
+/* Formulaire */
+.bg-form {
+    position: relative;
+    z-index: 1; /* au-dessus de l’overlay */
+    background: rgba(255, 255, 255, 0.7); /* blanc translucide */
+    backdrop-filter: blur(6px); /* effet verre dépoli */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Bouton */
+.btn-primary {
+    background: linear-gradient(90deg, #0066ff, #3399ff);
+    border: none;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    background: linear-gradient(90deg, #0052cc, #2675d9);
+}
+
+/* Titre */
+h1 {
+    color: #0066ff;
+    font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}

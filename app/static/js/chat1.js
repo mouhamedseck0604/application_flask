@@ -3,9 +3,7 @@ var socket = io();
 
 let destinataire = null;
 let groupdest= null;
-
-const now = new Date();
-const temps = now.toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+let selectedItem = { type: null, id: null };
 
 
 function appendMessage(msg, me=false, time=null, nom = null) {
@@ -38,6 +36,7 @@ socket.on('message', function(msg){
 function sendMessage(){
     var input = document.getElementById('message');
     var msg = input.value.trim();
+    const temps = new Date().toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
     if (!msg) return;
     // on verifie si le message est privé 
     if (destinataire){
@@ -147,25 +146,34 @@ socket.on('update_members', function(data) {
   // Afficher les utilisateurs
   data.users.forEach(user => {
     const li = document.createElement('li');
-    li.className = "flex items-center gap-2 px-3 py-2 cursor-pointer rounded-lg hover:bg-slate-700/30 transition";
+    li.className = "flex items-center justify-between px-3 py-2 cursor-pointer rounded-lg hover:bg-slate-700/30 transition";
 
     // Point vert si en ligne
     const onlineDot = user.online 
       ? '<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block ml-1"></span>'
       : '';
 
+    const unreadBadge = user.unread > 0
+      ? `<span class="ml-2 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${user.unread} <i class="fas fa-envelope"></i></span>`
+      : "";
+
     li.innerHTML = `
       <div class="flex items-center gap-2">
         <i class="fas fa-user w-5 h-5 text-slate-400"></i>
-        <span class="text-sm text-slate-200">${user.fullname}</span>
+        <span class="contact-name text-sm text-slate-200">${user.fullname}</span>
         ${onlineDot}
       </div>
+      ${unreadBadge}
     `;
+    if (selectedItem.type === 'user' && selectedItem.id === user.id) {
+      li.classList.add('selected-user');
+    }
     li.addEventListener('click',()=>{
       // Retirer la classe de tous les autres
       document.querySelectorAll('#userList li').forEach(el => el.classList.remove('selected-user'));
       // Ajouter la classe à l’utilisateur cliqué
       li.classList.add('selected-user');
+      selectedItem = { type: 'user', id: user.id };
       document.getElementById('zonetext').classList.remove('hidden');
       document.getElementById('chat').classList.remove('bg-img');
       ouvrirchatpv(user.id, user.fullname);
@@ -186,14 +194,18 @@ socket.on('update_members', function(data) {
     li.innerHTML = `
       <div classe="gap-2">
         <i class="fas fa-users w-5 h-5 text-slate-400"></i>
-        <span class="text-sm text-slate-200">${group.nomGroup}</span>
+        <span class="contact-name text-sm text-slate-200">${group.nomGroup}</span>
       </div>
       ${group.unread > 0 ? `<span class="ml-2 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${group.unread} <i class="fas fa-envelope"></i>
       </span>` : ""}
     `;
+    if (selectedItem.type === 'group' && selectedItem.id === group.id) {
+      li.classList.add('selected-user');
+    }
     li.addEventListener('click',()=>{
       document.querySelectorAll('#userList li').forEach(el => el.classList.remove('selected-user') );
       li.classList.add('selected-user');
+      selectedItem = { type: 'group', id: group.id };
       document.getElementById('zonetext').classList.remove('hidden');
       document.getElementById('chat').classList.remove('bg-img');
       ouvrirchatgp(group.id, group.nomGroup);
@@ -228,6 +240,8 @@ function ouvrirchatpv(userId, fullname) {
   messagesArea.innerHTML = '';
 
   // Demander au serveur l’historique des messages privés
+  // Revenir les compteurs non lus à zéro
+  socket.emit("messages_prive_lu", { partner_id: userId, user_id: currentUser.id });
   socket.emit('load_private', { from: currentUser.id, to: userId });
 }
 
@@ -243,7 +257,13 @@ socket.on('private_history', (messages) => {
 
 // Réception d’un nouveau message privé (ajout direct sans recharger)
 socket.on('private_message', (data) => {
-  appendMessage(data.mes, data.exp === currentUser.id, data.time);
+  // On n'affiche le message que si l'utilisateur est
+  // actuellement dans la conversation avec cet expéditeur.
+  if (destinataire === data.exp) {
+    appendMessage(data.mes, data.exp === currentUser.id, data.time);
+    // On marque la conversation comme lue pour remettre à zéro le compteur
+    socket.emit("messages_prive_lu", { partner_id: data.exp, user_id: currentUser.id });
+  }
 });
 
 function openGroupModal() {

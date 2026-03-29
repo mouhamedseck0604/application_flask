@@ -184,7 +184,6 @@
 
 .selected-user {
   background-color: rgba(16,185,129,0.2); /* vert léger */
-  border: 1px solid rgba(16,185,129,0.4);
 }
 
 .emoji-text {
@@ -213,4 +212,9 @@
   background-color: rgba(0, 0, 0, 0.5); /* couche noire à 50% */
   background-blend-mode: darken;
 
+}
+.logo{
+  background-image: url('../images/logo.png');
+  background-size: cover;
+  background-repeat: no-repeat;
 }

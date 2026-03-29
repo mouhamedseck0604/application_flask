@@ -3,23 +3,24 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, EmailField, PasswordField,SubmitField
 from wtforms.validators import DataRequired, length, Email
 from . import app,db
-from .model import  Utilisateur, Group, Message, GroupMembre
+from .model import  Utilisateur, Group, Message, GroupMembre, PrivateChat
+from sqlalchemy import or_, and_
 from flask_login import login_user
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from datetime import datetime
 
 #formulaire de connexion
 class formulaireLogin(FlaskForm):
-    email = EmailField('Email')
-    password = PasswordField('password', validators=[DataRequired()])
+    email = EmailField('Email:')
+    password = PasswordField('Mot de passe:', validators=[DataRequired()])
     submit = SubmitField('Se connecter')
 
 
 #formulaire d'inscription
 class formulaireIncrip(FlaskForm):
-    fullname = StringField('fullname', validators=[DataRequired()] )
-    email = EmailField('Email')
-    password = PasswordField('password', validators=[DataRequired()])
+    fullname = StringField('Nom Complet:', validators=[DataRequired()] )
+    email = EmailField('Email:')
+    password = PasswordField('Mot de passe:', validators=[DataRequired()])
     submit = SubmitField("s'inscrire")
 
 @app.route("/", methods=["POST","GET"])
@@ -95,51 +96,109 @@ def on_disconnect():
     broadcast_members()
 
 def broadcast_members():
-    users = Utilisateur.query.all()
-    for u in users:
-        # Récupérer les groupes dont l’utilisateur est membre
-        groupes_membre = GroupMembre.query.filter_by(user_id=u.id).all()
+    users = Utilisateur.query.order_by(Utilisateur.fullname).all()
+    if not users:
+        return
+
+    for viewer in users:
+        viewer_id = viewer.id
+
+        def _private_unread_count(partner_id):
+            """Messages privés non lus reçus de partner_id par viewer_id."""
+            chat_row = PrivateChat.query.filter_by(
+                user_id=viewer_id, partner_id=partner_id
+            ).first()
+            if chat_row and chat_row.last_seen:
+                return Message.query.filter(
+                    Message.exp_id == partner_id,
+                    Message.dest_id == viewer_id,
+                    Message.timestamp > chat_row.last_seen,
+                ).count()
+            return Message.query.filter_by(
+                exp_id=partner_id, dest_id=viewer_id
+            ).count()
+
+        # Liste contacts : aperçu + horodatage (comme les groupes) + compteur non lu + tri
+        contacts_payload = []
+        for usr in users:
+            if usr.id == viewer_id:
+                continue
+            last_priv = (
+                Message.query.filter(
+                    or_(
+                        and_(
+                            Message.exp_id == viewer_id,
+                            Message.dest_id == usr.id,
+                        ),
+                        and_(
+                            Message.exp_id == usr.id,
+                            Message.dest_id == viewer_id,
+                        ),
+                    )
+                )
+                .order_by(Message.timestamp.desc())
+                .first()
+            )
+            preview = ""
+            if last_priv and last_priv.contenu:
+                preview = last_priv.contenu.strip()
+                if len(preview) > 72:
+                    preview = preview[:72] + "…"
+
+            contacts_payload.append(
+                {
+                    "id": usr.id,
+                    "fullname": usr.fullname,
+                    "online": usr.id in online_users,
+                    "unread": _private_unread_count(usr.id),
+                    "last_message": preview,
+                    "last_time": last_priv.timestamp.isoformat() if last_priv else None,
+                }
+            )
+
+        contacts_payload.sort(
+            key=lambda u: (u["unread"], u["last_time"] or ""),
+            reverse=True,
+        )
 
         groups_payload = []
-        for gm in groupes_membre:
-            # Dernier message du groupe
-            last_msg = Message.query.filter_by(group_id=gm.group.id).order_by(Message.timestamp.desc()).first()
-
-            # Nombre de messages non lus
+        for gm in GroupMembre.query.filter_by(user_id=viewer_id).all():
+            last_msg = (
+                Message.query.filter_by(group_id=gm.group.id)
+                .order_by(Message.timestamp.desc())
+                .first()
+            )
             if gm.last_seen:
                 unread_count = Message.query.filter(
                     Message.group_id == gm.group.id,
                     Message.timestamp > gm.last_seen,
-                    Message.exp_id != gm.user_id
+                    Message.exp_id != gm.user_id,
                 ).count()
             else:
                 unread_count = Message.query.filter(
                     Message.group_id == gm.group.id,
-                    Message.exp_id != gm.user_id
+                    Message.exp_id != gm.user_id,
                 ).count()
 
-            groups_payload.append({
-                "id": gm.group.id,
-                "nomGroup": gm.group.nomGroup,
-                "last_message": last_msg.contenu if last_msg else "",
-                "last_time": last_msg.timestamp.isoformat() if last_msg else None,  # 👉 conversion en string
-                "unread": unread_count
-            })
+            groups_payload.append(
+                {
+                    "id": gm.group.id,
+                    "nomGroup": gm.group.nomGroup,
+                    "last_message": last_msg.contenu if last_msg else "",
+                    "last_time": last_msg.timestamp.isoformat() if last_msg else None,
+                    "unread": unread_count,
+                }
+            )
 
-        # Tri par dernier message
         groups_payload.sort(key=lambda g: g["last_time"] or "", reverse=True)
 
         payload = {
-            "users": [
-                {"id": usr.id, "fullname": usr.fullname, "online": usr.id in online_users}
-                for usr in users
-            ],
+            "users": contacts_payload,
             "groups": groups_payload,
-            "countOnline": len(online_users)   # ajout du compteur
+            "countOnline": len(online_users),
         }
 
-        # Envoyer uniquement à l’utilisateur concerné
-        emit("update_members", payload, room=f"user_{u.id}")
+        emit("update_members", payload, room=f"user_{viewer_id}")
 
 @socketio.on('load_private')
 def load_private(data):
@@ -173,6 +232,10 @@ def message_prive(data):
         "mes": text,
         "time": msg.timestamp.strftime("%H:%M")
     }, room=f"user_{to_id}")
+
+    # Mettre à jour les compteurs "non lus" dans la sidebar
+    broadcast_members()
+    broadcast_members()
 
 # ======= creation de groupe ========
 # recuperation des utilisateur pour les afficher lors de la creation de groupe
@@ -256,4 +319,27 @@ def mark_group_read(data):
     if gm:
         gm.last_seen = datetime.utcnow()
         db.session.commit()
+    broadcast_members()
+
+@socketio.on("messages_prive_lu")
+def mark_private_read(data):
+    """
+    Marque la conversation privée (viewer=user_id, partner=partner_id) comme lue
+    afin de remettre le compteur 'unread' à zéro côté sidebar.
+    """
+    partner_id = data["partner_id"]
+    viewer_id = data["user_id"]
+
+    chat_row = PrivateChat.query.filter_by(user_id=viewer_id, partner_id=partner_id).first()
+    if chat_row:
+        chat_row.last_seen = datetime.utcnow()
+    else:
+        chat_row = PrivateChat(
+            user_id=viewer_id,
+            partner_id=partner_id,
+            last_seen=datetime.utcnow(),
+        )
+        db.session.add(chat_row)
+
+    db.session.commit()
     broadcast_members()

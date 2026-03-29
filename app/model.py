@@ -74,4 +74,10 @@ class Message(UserMixin,db.Model):
     dest = db.relationship('Utilisateur', foreign_keys=[dest_id])
     group = db.relationship('Group')
 
+class PrivateChat(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"))
+    partner_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"))
+    last_seen = db.Column(db.DateTime)
+
 with app.app_context(): db.create_all()
